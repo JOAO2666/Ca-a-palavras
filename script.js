@@ -15,10 +15,10 @@ const database = firebase.database();
 // Variáveis globais
 let grid = [];
 let selectedCells = [];
+let isGameStarted = false;
 let startTime;
 let timerInterval;
-let isGameStarted = false;
-let foundWords = new Set();
+const foundWords = new Set();
 
 // Palavras e suas posições
 const words = {
@@ -110,7 +110,7 @@ function updateSelection(e) {
     if (!isGameStarted || selectedCells.length === 0) return;
 
     const cell = e.target.closest('.cell');
-    if (!cell) return;
+    if (!cell || selectedCells.includes(cell)) return;
 
     const lastCell = selectedCells[selectedCells.length - 1];
     const lastRow = parseInt(lastCell.dataset.row);
@@ -118,12 +118,9 @@ function updateSelection(e) {
     const currentRow = parseInt(cell.dataset.row);
     const currentCol = parseInt(cell.dataset.col);
 
-    // Verificar se a célula é adjacente
-    if (Math.abs(currentRow - lastRow) <= 1 && Math.abs(currentCol - lastCol) <= 1) {
-        if (!selectedCells.includes(cell)) {
-            selectedCells.push(cell);
-            cell.classList.add('selected');
-        }
+    if (isAdjacent(lastRow, lastCol, currentRow, currentCol)) {
+        selectedCells.push(cell);
+        cell.classList.add('selected');
     }
 }
 
@@ -137,21 +134,22 @@ function endSelection() {
     selectedCells = [];
 }
 
-// Verificação de palavras
+// Funções auxiliares
+function isAdjacent(row1, col1, row2, col2) {
+    return Math.abs(row1 - row2) <= 1 && Math.abs(col1 - col2) <= 1;
+}
+
 function checkWord(word) {
     const wordElement = document.querySelector(`.word-item[data-word="${word}"]`);
     if (wordElement && !foundWords.has(word)) {
         foundWords.add(word);
         wordElement.classList.add('found');
         selectedCells.forEach(cell => cell.classList.add('found'));
-        sounds.correct.play();
 
         if (foundWords.size === Object.keys(words).length) {
-            sounds.complete.play();
             endGame();
         }
     } else {
-        sounds.wrong.play();
         selectedCells.forEach(cell => {
             cell.classList.add('wrong');
             setTimeout(() => cell.classList.remove('wrong'), 500);
@@ -159,7 +157,7 @@ function checkWord(word) {
     }
 }
 
-// Controle do jogo
+// Funções de controle do jogo
 function startGame() {
     const studentName = document.getElementById('studentName').value.trim();
     if (!studentName) {
@@ -174,9 +172,6 @@ function startGame() {
     document.getElementById('startButton').disabled = true;
     document.getElementById('resetButton').disabled = false;
     document.getElementById('checkButton').disabled = false;
-
-    initializeGrid();
-    generateQRCode();
 }
 
 function resetGame() {
@@ -188,8 +183,7 @@ function resetGame() {
     document.getElementById('resetButton').disabled = true;
     document.getElementById('checkButton').disabled = true;
 
-    document.querySelectorAll('.word-item').forEach(item => item.classList.remove('found'));
-    document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('found'));
+    initializeGrid();
 }
 
 function endGame() {
@@ -198,11 +192,24 @@ function endGame() {
     const completionTime = document.querySelector('.kahoot-timer').textContent;
 
     const studentName = document.getElementById('studentName').value.trim();
-    saveScore(studentName, completionTime);
+    const score = {
+        name: studentName,
+        time: completionTime,
+        date: new Date().toISOString()
+    };
 
+    // Salvar no Firebase
+    database.ref('scores').push(score);
+
+    // Mostrar mensagem de conclusão
     document.getElementById('completionTime').textContent = completionTime;
-    document.getElementById('completionMessage').style.display = 'block';
     document.getElementById('overlay').style.display = 'block';
+    document.getElementById('completionMessage').style.display = 'block';
+}
+
+function closeCompletionMessage() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('completionMessage').style.display = 'none';
 }
 
 // Timer
@@ -210,92 +217,53 @@ function updateTimer() {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const minutes = Math.floor(elapsed / 60);
     const seconds = elapsed % 60;
-    const timerElement = document.querySelector('.kahoot-timer');
-    timerElement.textContent = `Tempo: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    document.querySelector('.kahoot-timer').textContent =
+        `Tempo: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
 
-    // Efeito de pulso no timer
-    if (seconds % 2 === 0) {
-        timerElement.style.transform = 'scale(1.1)';
-        setTimeout(() => timerElement.style.transform = 'scale(1)', 200);
-    }
+// Ranking
+function updateRanking() {
+    const rankingList = document.getElementById('rankingList');
+    rankingList.innerHTML = '';
+
+    database.ref('scores')
+        .orderByChild('date')
+        .limitToLast(10)
+        .once('value')
+        .then(snapshot => {
+            const scores = [];
+            snapshot.forEach(childSnapshot => {
+                scores.push(childSnapshot.val());
+            });
+
+            scores.sort((a, b) => {
+                const timeA = a.time.split(':').map(Number);
+                const timeB = b.time.split(':').map(Number);
+                return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+            });
+
+            scores.forEach((score, index) => {
+                const li = document.createElement('li');
+                li.className = 'ranking-item';
+                li.innerHTML = `
+                    <span>${index + 1}. ${score.name}</span>
+                    <span>${score.time}</span>
+                `;
+                rankingList.appendChild(li);
+            });
+        });
 }
 
 // QR Code
 function generateQRCode() {
-    const qrCodeElement = document.getElementById('qrCode');
-    qrCodeElement.innerHTML = '';
-    new QRCode(qrCodeElement, {
+    const qrCode = document.getElementById('qrCode');
+    new QRCode(qrCode, {
         text: window.location.href,
         width: 200,
-        height: 200
-    });
-}
-
-// Firebase
-function saveScore(name, time) {
-    const scoresRef = database.ref('scores');
-    scoresRef.push({
-        name: name,
-        time: time,
-        date: new Date().toISOString()
-    });
-}
-
-function updateRanking() {
-    const scoresRef = database.ref('scores');
-    scoresRef.orderByChild('time').limitToLast(10).on('value', (snapshot) => {
-        const rankingList = document.getElementById('rankingList');
-        rankingList.innerHTML = '';
-
-        const scores = [];
-        snapshot.forEach((childSnapshot) => {
-            scores.push(childSnapshot.val());
-        });
-
-        scores.reverse().forEach((score, index) => {
-            const li = document.createElement('li');
-            li.className = 'ranking-item';
-            li.innerHTML = `
-                <span>${index + 1}. ${score.name}</span>
-                <span>${score.time}</span>
-            `;
-            rankingList.appendChild(li);
-        });
-    });
-}
-
-// Utilitários
-function getRandomLetter() {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    return letters[Math.floor(Math.random() * letters.length)];
-}
-
-function closeCompletionMessage() {
-    document.getElementById('completionMessage').style.display = 'none';
-    document.getElementById('overlay').style.display = 'none';
-}
-
-// Efeito de destaque nas palavras encontradas
-function highlightFoundWord(word) {
-    const wordElement = document.querySelector(`.word-item[data-word="${word}"]`);
-    if (wordElement) {
-        wordElement.style.transform = 'scale(1.1)';
-        wordElement.style.backgroundColor = '#ffd700';
-        setTimeout(() => {
-            wordElement.style.transform = 'scale(1)';
-            wordElement.style.backgroundColor = '';
-        }, 500);
-    }
-}
-
-// Animação de entrada
-function animateEntry() {
-    const elements = document.querySelectorAll('.word-item, .cell, .kahoot-button');
-    elements.forEach((element, index) => {
-        setTimeout(() => {
-            element.style.opacity = '1';
-            element.style.transform = 'translateY(0)';
-        }, index * 100);
+        height: 200,
+        colorDark: '#46178f',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
     });
 }
 

@@ -14,6 +14,15 @@
     --kahoot-background: #f5f5f5;
     --kahoot-text: #333;
     --kahoot-white: #ffffff;
+    --kahoot-purple: #46178f;
+    --kahoot-pink: #e21b5a;
+    --kahoot-blue: #00a0e3;
+    --kahoot-yellow: #ffd700;
+    --kahoot-green: #00b894;
+    --kahoot-red: #ff4d4d;
+    --kahoot-black: #000000;
+    --kahoot-gray: #f5f5f5;
+    --kahoot-dark-gray: #333333;
 }
 
 * {
