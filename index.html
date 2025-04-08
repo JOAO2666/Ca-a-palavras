@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caça-Palavras de Eng. Computação</title>
+    <!-- Adicionando Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- QR Code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            width: 100%;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 36px;
+        }
+        
+        .content {
+            display: flex;
+            flex-direction: row;
+            gap: 50px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        
+        .word-search {
+            flex: 1;
+            min-width: 400px;
+            max-width: 650px;
+        }
+        
+        .questions {
+            flex: 1;
+            min-width: 400px;
+        }
+        
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            gap: 2px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            background-color: #e8f4fc;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .cell:hover {
+            background-color: #b3e0ff;
+        }
+        
+        h2 {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        li {
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #f5f9fc;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+            font-size: 14px;
+        }
+        
+        .word {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        @media (max-width: 1100px) {
+            .content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .word-search, .questions {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .word-grid {
+                grid-template-columns: repeat(20, 1fr);
+                font-size: 16px;
+                margin-bottom: 30px;
+            }
+            
+            .cell {
+                width: 24px;
+                height: 24px;
+            }
+        }
+        
+        /* Estilos para impressão - economiza tinta/toner */
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 10px;
+                margin: 0;
+                page-break-after: always;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 24px;
+                margin-bottom: 15px;
+                color: black;
+            }
+            
+            .content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .word-search, .questions {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .word-grid {
+                gap: 0;
+                margin-top: 10px;
+                font-size: 14px;
+            }
+            
+            .cell {
+                width: 20px;
+                height: 20px;
+                background-color: white;
+                border: 1px solid #ddd;
+                border-radius: 0;
+            }
+            
+            h2 {
+                color: black;
+                border-bottom: 1px solid black;
+                font-size: 18px;
+            }
+            
+            li {
+                margin-bottom: 4px;
+                padding: 3px;
+                background-color: white;
+                border-left: 2px solid black;
+                font-size: 10px;
+            }
+            
+            /* Remover os elementos que não precisam ser impressos */
+            .cell:hover {
+                background-color: white;
+            }
+            
+            /* Ajuste para imprimir múltiplos caça-palavras por página */
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+            
+            .questions {
+                margin-top: -10px;
+            }
+            
+            .questions h2 {
+                margin-bottom: 10px;
+                font-size: 14px;
+            }
+            
+            ul {
+                margin-top: 5px;
+            }
+        }
+
+        /* Botões para controlar a impressão */
+        .print-controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .print-btn {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .print-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        /* Ocultar controles na impressão */
+        @media print {
+            .print-controls {
+                display: none;
+            }
+        }
+        
+        /* Estilos para registro e QR code */
+        .login-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .login-form input, .login-form button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .login-form button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .qr-container {
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .leaderboard {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .leaderboard h3 {
+            color: #3498db;
+            border-bottom: 1px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .leaderboard-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .leaderboard-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Ocultar seções desnecessárias na impressão */
+        @media print {
+            .login-section, .qr-section, .leaderboard {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-controls">
+        <button class="print-btn" onclick="window.print()">Imprimir</button>
+    </div>
+    
+    <!-- Seção de login -->
+    <div class="login-section" id="login-section">
+        <h2>Identificação</h2>
+        <div class="login-form">
+            <input type="text" id="name-input" placeholder="Digite seu nome" />
+            <button id="start-btn">Iniciar Caça-Palavras</button>
+        </div>
+    </div>
+    
+    <!-- QR Code para compartilhamento -->
+    <div class="qr-section">
+        <h3>Compartilhe com os alunos</h3>
+        <div class="qr-container">
+            <div id="qrcode"></div>
+        </div>
+        <p>Escaneie o QR Code acima para acessar o caça-palavras no celular</p>
+    </div>
+    
+    <!-- Placar de líderes -->
+    <div class="leaderboard">
+        <h3>Ranking dos participantes</h3>
+        <ul class="leaderboard-list" id="leaderboard-list">
+            <!-- Os usuários serão adicionados aqui dinamicamente -->
+        </ul>
+    </div>
+
+    <div class="container">
+        <h1>Caça-Palavras: Eng. Computação</h1>
+        
+        <div class="content">
+            <div class="word-search">
+                <h2>Encontre as Palavras</h2>
+                
+                <div class="word-grid">
+                    <div class="cell">M</div>
+                    <div class="cell">B</div>
+                    <div class="cell">X</div>
+                    <div class="cell">G</div>
+                    <div class="cell">G</div>
+                    <div class="cell">J</div>
+                    <div class="cell">W</div>
+                    <div class="cell">T</div>
+                    <div class="cell">K</div>
+                    <div class="cell">P</div>
+                    <div class="cell">X</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">X</div>
+                    <div class="cell">W</div>
+                    <div class="cell">D</div>
+                    <div class="cell">P</div>
+                    <div class="cell">X</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">Q</div>
+                    <div class="cell">G</div>
+                    
+                    <div class="cell">O</div>
+                    <div class="cell">H</div>
+                    <div class="cell">S</div>
+                    <div class="cell">F</div>
+                    <div class="cell">I</div>
+                    <div class="cell">R</div>
+                    <div class="cell">N</div>
+                    <div class="cell">Z</div>
+                    <div class="cell">N</div>
+                    <div class="cell">J</div>
+                    <div class="cell">I</div>
+                    <div class="cell">F</div>
+                    <div class="cell">T</div>
+                    <div class="cell">S</div>
+                    <div class="cell">F</div>
+                    <div class="cell">S</div>
+                    <div class="cell">O</div>
+                    <div class="cell">P</div>
+                    <div class="cell">I</div>
+                    <div class="cell">V</div>
+                    
+                    <div class="cell">U</div>
+                    <div class="cell">C</div>
+                    <div class="cell">M</div>
+                    <div class="cell">C</div>
+                    <div class="cell">P</div>
+                    <div class="cell">U</div>
+                    <div class="cell">B</div>
+                    <div class="cell">D</div>
+                    <div class="cell">B</div>
+                    <div class="cell">U</div>
+                    <div class="cell">D</div>
+                    <div class="cell">G</div>
+                    <div class="cell">W</div>
+                    <div class="cell">O</div>
+                    <div class="cell">B</div>
+                    <div class="cell">E</div>
+                    <div class="cell">W</div>
+                    <div class="cell">N</div>
+                    <div class="cell">B</div>
+                    <div class="cell">S</div>
+                    
+                    <div class="cell">E</div>
+                    <div class="cell">P</div>
+                    <div class="cell">U</div>
+                    <div class="cell">C</div>
+                    <div class="cell">V</div>
+                    <div class="cell">K</div>
+                    <div class="cell">V</div>
+                    <div class="cell">D</div>
+                    <div class="cell">F</div>
+                    <div class="cell">O</div>
+                    <div class="cell">N</div>
+                    <div class="cell">B</div>
+                    <div class="cell">G</div>
+                    <div class="cell">N</div>
+                    <div class="cell">K</div>
+                    <div class="cell">C</div>
+                    <div class="cell">F</div>
+                    <div class="cell">J</div>
+                    <div class="cell">O</div>
+                    <div class="cell">S</div>
+                    
+                    <div class="cell">B</div>
+                    <div class="cell">K</div>
+                    <div class="cell">O</div>
+                    <div class="cell">L</div>
+                    <div class="cell">G</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">C</div>
+                    <div class="cell">E</div>
+                    <div class="cell">L</div>
+                    <div class="cell">R</div>
+                    <div class="cell">U</div>
+                    <div class="cell">K</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">S</div>
+                    <div class="cell">V</div>
+                    <div class="cell">U</div>
+                    <div class="cell">Z</div>
+                    <div class="cell">I</div>
+                    <div class="cell">D</div>
+                    <div class="cell">R</div>
+                    
+                    <div class="cell">F</div>
+                    <div class="cell">A</div>
+                    <div class="cell">N</div>
+                    <div class="cell">H</div>
+                    <div class="cell">O</div>
+                    <div class="cell">W</div>
+                    <div class="cell">E</div>
+                    <div class="cell">T</div>
+                    <div class="cell">H</div>
+                    <div class="cell">B</div>
+                    <div class="cell">L</div>
+                    <div class="cell">I</div>
+                    <div class="cell">P</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">A</div>
+                    <div class="cell">N</div>
+                    <div class="cell">S</div>
+                    <div class="cell">J</div>
+                    <div class="cell">U</div>
+                    <div class="cell">K</div>
+                    
+                    <div class="cell">E</div>
+                    <div class="cell">C</div>
+                    <div class="cell">L</div>
+                    <div class="cell">U</div>
+                    <div class="cell">A</div>
+                    <div class="cell">S</div>
+                    <div class="cell">J</div>
+                    <div class="cell">R</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">V</div>
+                    <div class="cell">A</div>
+                    <div class="cell">C</div>
+                    <div class="cell">M</div>
+                    <div class="cell">A</div>
+                    <div class="cell">C</div>
+                    <div class="cell">D</div>
+                    <div class="cell">D</div>
+                    <div class="cell">Z</div>
+                    <div class="cell">H</div>
+                    <div class="cell">Z</div>
+                    
+                    <div class="cell">W</div>
+                    <div class="cell">X</div>
+                    <div class="cell">C</div>
+                    <div class="cell">I</div>
+                    <div class="cell">K</div>
+                    <div class="cell">Z</div>
+                    <div class="cell">B</div>
+                    <div class="cell">Z</div>
+                    <div class="cell">N</div>
+                    <div class="cell">E</div>
+                    <div class="cell">P</div>
+                    <div class="cell">U</div>
+                    <div class="cell">U</div>
+                    <div class="cell">V</div>
+                    <div class="cell">M</div>
+                    <div class="cell">A</div>
+                    <div class="cell">S</div>
+                    <div class="cell">L</div>
+                    <div class="cell">W</div>
+                    <div class="cell">S</div>
+                    
+                    <div class="cell">M</div>
+                    <div class="cell">I</div>
+                    <div class="cell">V</div>
+                    <div class="cell">M</div>
+                    <div class="cell">S</div>
+                    <div class="cell">T</div>
+                    <div class="cell">X</div>
+                    <div class="cell">L</div>
+                    <div class="cell">U</div>
+                    <div class="cell">X</div>
+                    <div class="cell">D</div>
+                    <div class="cell">A</div>
+                    <div class="cell">N</div>
+                    <div class="cell">O</div>
+                    <div class="cell">G</div>
+                    <div class="cell">R</div>
+                    <div class="cell">E</div>
+                    <div class="cell">D</div>
+                    <div class="cell">W</div>
+                    <div class="cell">C</div>
+                    
+                    <div class="cell">J</div>
+                    <div class="cell">M</div>
+                    <div class="cell">Q</div>
+                    <div class="cell">S</div>
+                    <div class="cell">B</div>
+                    <div class="cell">T</div>
+                    <div class="cell">W</div>
+                    <div class="cell">S</div>
+                    <div class="cell">O</div>
+                    <div class="cell">S</div>
+                    <div class="cell">H</div>
+                    <div class="cell">V</div>
+                    <div class="cell">L</div>
+                    <div class="cell">L</div>
+                    <div class="cell">L</div>
+                    <div class="cell">I</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">G</div>
+                    <div class="cell">O</div>
+                    <div class="cell">A</div>
+                    
+                    <div class="cell">X</div>
+                    <div class="cell">R</div>
+                    <div class="cell">K</div>
+                    <div class="cell">A</div>
+                    <div class="cell">A</div>
+                    <div class="cell">W</div>
+                    <div class="cell">I</div>
+                    <div class="cell">T</div>
+                    <div class="cell">H</div>
+                    <div class="cell">U</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">A</div>
+                    <div class="cell">A</div>
+                    <div class="cell">U</div>
+                    <div class="cell">A</div>
+                    <div class="cell">E</div>
+                    <div class="cell">C</div>
+                    <div class="cell">A</div>
+                    <div class="cell">N</div>
+                    
+                    <div class="cell">U</div>
+                    <div class="cell">P</div>
+                    <div class="cell">Z</div>
+                    <div class="cell">G</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">E</div>
+                    <div class="cell">C</div>
+                    <div class="cell">C</div>
+                    <div class="cell">P</div>
+                    <div class="cell">V</div>
+                    <div class="cell">X</div>
+                    <div class="cell">H</div>
+                    <div class="cell">Q</div>
+                    <div class="cell">C</div>
+                    <div class="cell">I</div>
+                    <div class="cell">B</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">X</div>
+                    <div class="cell">S</div>
+                    <div class="cell">T</div>
+                    
+                    <div class="cell">X</div>
+                    <div class="cell">Q</div>
+                    <div class="cell">D</div>
+                    <div class="cell">E</div>
+                    <div class="cell">L</div>
+                    <div class="cell">U</div>
+                    <div class="cell">D</div>
+                    <div class="cell">A</div>
+                    <div class="cell">O</div>
+                    <div class="cell">X</div>
+                    <div class="cell">E</div>
+                    <div class="cell">V</div>
+                    <div class="cell">T</div>
+                    <div class="cell">I</div>
+                    <div class="cell">B</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">X</div>
+                    <div class="cell">S</div>
+                    <div class="cell">B</div>
+                    <div class="cell">E</div>
+                    
+                    <div class="cell">H</div>
+                    <div class="cell">Z</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">E</div>
+                    <div class="cell">L</div>
+                    <div class="cell">D</div>
+                    <div class="cell">U</div>
+                    <div class="cell">R</div>
+                    <div class="cell">C</div>
+                    <div class="cell">S</div>
+                    <div class="cell">T</div>
+                    <div class="cell">M</div>
+                    <div class="cell">E</div>
+                    <div class="cell">L</div>
+                    <div class="cell">W</div>
+                    <div class="cell">R</div>
+                    <div class="cell">H</div>
+                    <div class="cell">S</div>
+                    <div class="cell">D</div>
+                    <div class="cell">X</div>
+                    
+                    <div class="cell">Y</div>
+                    <div class="cell">R</div>
+                    <div class="cell">R</div>
+                    <div class="cell">F</div>
+                    <div class="cell">F</div>
+                    <div class="cell">P</div>
+                    <div class="cell">K</div>
+                    <div class="cell">H</div>
+                    <div class="cell">D</div>
+                    <div class="cell">U</div>
+                    <div class="cell">I</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">C</div>
+                    <div class="cell">D</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">H</div>
+                    <div class="cell">N</div>
+                    <div class="cell">T</div>
+                    <div class="cell">R</div>
+                    <div class="cell">Q</div>
+                    
+                    <div class="cell">R</div>
+                    <div class="cell">I</div>
+                    <div class="cell">R</div>
+                    <div class="cell">H</div>
+                    <div class="cell">F</div>
+                    <div class="cell">H</div>
+                    <div class="cell">U</div>
+                    <div class="cell">C</div>
+                    <div class="cell">R</div>
+                    <div class="cell">B</div>
+                    <div class="cell">G</div>
+                    <div class="cell">A</div>
+                    <div class="cell">L</div>
+                    <div class="cell">K</div>
+                    <div class="cell">D</div>
+                    <div class="cell">W</div>
+                    <div class="cell">V</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">Q</div>
+                    <div class="cell">P</div>
+                    
+                    <div class="cell">W</div>
+                    <div class="cell">I</div>
+                    <div class="cell">D</div>
+                    <div class="cell">Q</div>
+                    <div class="cell">T</div>
+                    <div class="cell">D</div>
+                    <div class="cell">A</div>
+                    <div class="cell">C</div>
+                    <div class="cell">P</div>
+                    <div class="cell">C</div>
+                    <div class="cell">D</div>
+                    <div class="cell">M</div>
+                    <div class="cell">A</div>
+                    <div class="cell">L</div>
+                    <div class="cell">V</div>
+                    <div class="cell">S</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">V</div>
+                    <div class="cell">P</div>
+                    <div class="cell">C</div>
+                    
+                    <div class="cell">C</div>
+                    <div class="cell">U</div>
+                    <div class="cell">N</div>
+                    <div class="cell">I</div>
+                    <div class="cell">D</div>
+                    <div class="cell">A</div>
+                    <div class="cell">D</div>
+                    <div class="cell">E</div>
+                    <div class="cell">D</div>
+                    <div class="cell">E</div>
+                    <div class="cell">C</div>
+                    <div class="cell">O</div>
+                    <div class="cell">P</div>
+                    <div class="cell">A</div>
+                    <div class="cell">R</div>
+                    <div class="cell">A</div>
+                    <div class="cell">L</div>
+                    <div class="cell">E</div>
+                    <div class="cell">L</div>
+                    <div class="cell">A</div>
+                    
+                    <div class="cell">H</div>
+                    <div class="cell">S</div>
+                    <div class="cell">M</div>
+                    <div class="cell">J</div>
+                    <div class="cell">K</div>
+                    <div class="cell">R</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">R</div>
+                    <div class="cell">E</div>
+                    <div class="cell">G</div>
+                    <div class="cell">I</div>
+                    <div class="cell">S</div>
+                    <div class="cell">T</div>
+                    <div class="cell">R</div>
+                    <div class="cell">A</div>
+                    <div class="cell">D</div>
+                    <div class="cell">O</div>
+                    <div class="cell">R</div>
+                    <div class="cell">E</div>
+                    <div class="cell">S</div>
+                    
+                    <div class="cell">W</div>
+                    <div class="cell">D</div>
+                    <div class="cell">S</div>
+                    <div class="cell">V</div>
+                    <div class="cell">Q</div>
+                    <div class="cell">D</div>
+                    <div class="cell">Z</div>
+                    <div class="cell">J</div>
+                    <div class="cell">X</div>
+                    <div class="cell">P</div>
+                    <div class="cell">F</div>
+                    <div class="cell">B</div>
+                    <div class="cell">E</div>
+                    <div class="cell">S</div>
+                    <div class="cell">F</div>
+                    <div class="cell">Y</div>
+                    <div class="cell">C</div>
+                    <div class="cell">I</div>
+                    <div class="cell">A</div>
+                    <div class="cell">V</div>
+                </div>
+            </div>
+            
+            <div class="questions">
+                <h2>Perguntas</h2>
+                
+                <ul>
+                    <li>Tipo de memória que perde os dados armazenados quando não está ligada à energia:</li>
+                    <li>Memórias que estão dentro do processador são memórias:</li>
+                    <li>Memórias que estão fora do processador são memórias:</li>
+                    <li>Qual dispositivo de entrada digitaliza imagens e documentos?</li>
+                    <li>Conjunto de letras, números e símbolos.</li>
+                    <li>Conexão sem fio.</li>
+                    <li>Equipamento usado no rosto para imersão em ambientes virtuais.</li>
+                    <li>Sigla que designa o "cérebro" do computador, responsável pelo processamento das informações.</li>
+                    <li>Circuito fundamental que realiza operações aritméticas e lógicas.</li>
+                    <li>Parte da CPU que coordena a execução de instruções e o fluxo de dados entre os componentes.</li>
+                    <li>Elemento temporário que armazena dados e instruções durante o processamento.</li>
+                    <li>Diferente do modelo de Von Neumann, o Harvard Mark I possui uma memória que processa os dados e instruções de forma:</li>
+                    <li>O ENIAC foi desenvolvido em plena Segunda Guerra Mundial a pedido do exército dos EUA, seu objetivo era realizar cálculos:</li>
+                    <li>Em 1945, Von Neumann escreveu o rascunho de um relatório sobre o projeto ____________, nele continha a base do seu modelo de arquitetura.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Script para destacar células quando clicadas
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', function() {
+                this.style.backgroundColor = this.style.backgroundColor === 'rgb(231, 76, 60)' ? '#e8f4fc' : '#e74c3c';
+                this.style.color = this.style.backgroundColor === '#e8f4fc' ? 'black' : 'white';
+                
+                // Verificar se o usuário completou o caça-palavras
+                checkCompletion();
+            });
+        });
+        
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgwEwgJT1ZLJk5drFQT9_Z-aS3XFpSgCU",
+            authDomain: "caca-palavras-engcomp.firebaseapp.com",
+            projectId: "caca-palavras-engcomp",
+            databaseURL: "https://caca-palavras-engcomp-default-rtdb.firebaseio.com",
+            storageBucket: "caca-palavras-engcomp.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:1234567890abcdef123456"
+        };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Criar QR Code com a URL atual
+        const qrcode = new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href,
+            width: 128,
+            height: 128,
+            colorDark: "#3498db",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        // Gerenciar usuário
+        let currentUser = null;
+        let startTime = null;
+        
+        // Botão de início
+        document.getElementById('start-btn').addEventListener('click', function() {
+            const userName = document.getElementById('name-input').value.trim();
+            if (userName) {
+                startChallenge(userName);
+            } else {
+                alert("Por favor, digite seu nome para começar.");
+            }
+        });
+        
+        // Iniciar desafio
+        function startChallenge(userName) {
+            currentUser = userName;
+            startTime = new Date().getTime();
+            
+            // Registrar o início no Firebase
+            database.ref('participants/' + encodeUserNameAsKey(userName)).set({
+                name: userName,
+                startTime: startTime,
+                completed: false
+            });
+            
+            // Ocultar seção de login
+            document.getElementById('login-section').classList.add('hidden');
+            
+            // Mostrar mensagem de boas-vindas
+            alert(`Bem-vindo(a), ${userName}! Seu tempo começou a contar. Boa sorte!`);
+        }
+        
+        // Verificar conclusão do caça-palavras
+        function checkCompletion() {
+            // Verificação simples: se pelo menos 14 células foram marcadas (uma para cada palavra)
+            // Esta é uma verificação bem básica, você pode aprimorar para verificar posições específicas
+            const markedCells = document.querySelectorAll('.cell[style*="background-color: rgb(231, 76, 60)"]');
+            
+            if (markedCells.length >= 14 && currentUser && !hasCompletedChallenge) {
+                const endTime = new Date().getTime();
+                const timeSpent = (endTime - startTime) / 1000; // tempo em segundos
+                
+                // Registrar conclusão no Firebase
+                database.ref('participants/' + encodeUserNameAsKey(currentUser)).update({
+                    completed: true,
+                    completionTime: endTime,
+                    timeSpent: timeSpent
+                });
+                
+                hasCompletedChallenge = true;
+                alert(`Parabéns, ${currentUser}! Você completou o caça-palavras em ${formatTime(timeSpent)}.`);
+            }
+        }
+        
+        // Codificar nome de usuário para chave do Firebase (remover caracteres especiais)
+        function encodeUserNameAsKey(name) {
+            return name.replace(/[.#$/[\]]/g, '_');
+        }
+        
+        // Formatar tempo
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+        
+        // Atualizar placar de líderes
+        function updateLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = '';
+            
+            database.ref('participants').orderByChild('timeSpent').limitToFirst(10).once('value', snapshot => {
+                const leaders = [];
+                
+                snapshot.forEach(childSnapshot => {
+                    const participant = childSnapshot.val();
+                    if (participant.completed) {
+                        leaders.push(participant);
+                    }
+                });
+                
+                leaders.forEach(leader => {
+                    const li = document.createElement('li');
+                    li.textContent = `${leader.name} - ${formatTime(leader.timeSpent)}`;
+                    leaderboardList.appendChild(li);
+                });
+            });
+        }
+        
+        // Verificar se o usuário já completou o desafio
+        let hasCompletedChallenge = false;
+        
+        // Atualizar o placar a cada 5 segundos
+        setInterval(updateLeaderboard, 5000);
+        
+        // Carregar placar inicial
+        updateLeaderboard();
+    </script>
+</body>
+</html> 
