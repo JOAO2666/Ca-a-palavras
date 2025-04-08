@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caça-Palavras - Memória e Dispositivos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Caça-Palavras</h1>
+            <p>Encontre as palavras relacionadas à memória e dispositivos de computador!</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="student-info">
+            <h2>Informações do Aluno</h2>
+            <input type="text" id="studentName" placeholder="Digite seu nome" required>
+        </div>
+
+        <div class="game-container">
+            <div class="controls">
+                <button id="startButton">Iniciar Jogo</button>
+                <button id="resetButton" disabled>Reiniciar</button>
+                <button id="checkButton" disabled>Verificar</button>
+                <div class="timer">Tempo: 00:00</div>
+            </div>
+            <div class="grid" id="grid"></div>
+        </div>
+
+        <div class="word-list">
+            <div class="word-item" data-word="MEMORIA">MEMÓRIA</div>
+            <div class="word-item" data-word="RAM">RAM</div>
+            <div class="word-item" data-word="ROM">ROM</div>
+            <div class="word-item" data-word="SSD">SSD</div>
+            <div class="word-item" data-word="HD">HD</div>
+            <div class="word-item" data-word="PENDRIVE">PENDRIVE</div>
+            <div class="word-item" data-word="CD">CD</div>
+            <div class="word-item" data-word="DVD">DVD</div>
+            <div class="word-item" data-word="BLURAY">BLURAY</div>
+            <div class="word-item" data-word="FLOPPY">FLOPPY</div>
+        </div>
+
+        <div class="qr-section">
+            <h2>Acesse pelo Celular</h2>
+            <div class="qr-code" id="qrCode"></div>
+            <p>Escaneie o QR code para acessar o caça-palavras no seu celular</p>
+        </div>
+
+        <div class="ranking">
+            <h2>Ranking dos Mais Rápidos</h2>
+            <ul class="ranking-list" id="rankingList"></ul>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" style="display: none;"></div>
+    <div class="completion-message" id="completionMessage" style="display: none;">
+        <h2>Parabéns!</h2>
+        <p>Você completou o caça-palavras em <span id="completionTime"></span>!</p>
+        <button onclick="closeCompletionMessage()">Fechar</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
+    <script>
+        // ... resto do código JavaScript permanece igual ...
+    </script>
+</body>
+</html> 
