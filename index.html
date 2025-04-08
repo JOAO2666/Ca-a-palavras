@@ -3,64 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caça-Palavras - Memória e Dispositivos</title>
+    <title>Caça-Palavras - Arquitetura de Computadores</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>Caça-Palavras</h1>
-            <p>Encontre as palavras relacionadas à memória e dispositivos de computador!</p>
+            <h1>Caça-Palavras - Arquitetura de Computadores</h1>
+            <p>Encontre as palavras relacionadas à arquitetura de computadores e seus componentes!</p>
         </div>
     </header>
 
-    <div class="container">
-        <div class="student-info">
-            <h2>Informações do Aluno</h2>
-            <input type="text" id="studentName" placeholder="Digite seu nome" required>
-        </div>
-
+    <main class="container">
         <div class="game-container">
-            <div class="controls">
-                <button id="startButton">Iniciar Jogo</button>
-                <button id="resetButton" disabled>Reiniciar</button>
-                <button id="checkButton" disabled>Verificar</button>
-                <div class="timer">Tempo: 00:00</div>
+            <div class="student-info">
+                <input type="text" id="studentName" placeholder="Digite seu nome" class="kahoot-input">
             </div>
-            <div class="grid" id="grid"></div>
-        </div>
 
-        <div class="word-list">
-            <div class="word-item" data-word="MEMORIA">MEMÓRIA</div>
-            <div class="word-item" data-word="RAM">RAM</div>
-            <div class="word-item" data-word="ROM">ROM</div>
-            <div class="word-item" data-word="SSD">SSD</div>
-            <div class="word-item" data-word="HD">HD</div>
-            <div class="word-item" data-word="PENDRIVE">PENDRIVE</div>
-            <div class="word-item" data-word="CD">CD</div>
-            <div class="word-item" data-word="DVD">DVD</div>
-            <div class="word-item" data-word="BLURAY">BLURAY</div>
-            <div class="word-item" data-word="FLOPPY">FLOPPY</div>
+            <div class="controls">
+                <button id="startButton" class="kahoot-button">Iniciar Jogo</button>
+                <button id="resetButton" class="kahoot-button" disabled>Reiniciar</button>
+                <button id="checkButton" class="kahoot-button" disabled>Verificar</button>
+                <div class="timer kahoot-timer">Tempo: 00:00</div>
+            </div>
+
+            <div class="grid" id="grid"></div>
+
+            <div class="word-list">
+                <div class="word-item" data-word="VOLATIL">VOLÁTIL</div>
+                <div class="word-item" data-word="PRIMARIAS">PRIMÁRIAS</div>
+                <div class="word-item" data-word="SECUNDARIAS">SECUNDÁRIAS</div>
+                <div class="word-item" data-word="SCANNER">SCANNER</div>
+                <div class="word-item" data-word="TECLADO">TECLADO</div>
+                <div class="word-item" data-word="WIRELESS">WIRELESS</div>
+                <div class="word-item" data-word="OCULOS">ÓCULOS</div>
+                <div class="word-item" data-word="CPU">CPU</div>
+                <div class="word-item" data-word="ULA">ULA</div>
+                <div class="word-item" data-word="UNIDADEDECONTROLE">UNIDADE DE CONTROLE</div>
+                <div class="word-item" data-word="REGISTRADORES">REGISTRADORES</div>
+                <div class="word-item" data-word="PARALELA">PARALELA</div>
+                <div class="word-item" data-word="BALISTICOS">BALÍSTICOS</div>
+                <div class="word-item" data-word="EDVAC">EDVAC</div>
+            </div>
+
+            <div class="questions">
+                <h2>Perguntas</h2>
+                <ol>
+                    <li>Tipo de memória que perde os dados armazenados quando não está ligada à energia.</li>
+                    <li>Memórias que estão dentro do processador são memórias.</li>
+                    <li>Memórias que estão fora do processador são memórias.</li>
+                    <li>Qual dispositivo de entrada digitaliza imagens e documentos?</li>
+                    <li>Conjunto de letras, números e símbolos.</li>
+                    <li>Conexão sem fio.</li>
+                    <li>Equipamento usado no rosto para imersão em ambientes virtuais.</li>
+                    <li>Sigla que designa o "cérebro" do computador, responsável pelo processamento das informações.</li>
+                    <li>Circuito fundamental que realiza operações aritméticas e lógicas.</li>
+                    <li>Parte da CPU que coordena a execução de instruções e o fluxo de dados entre os componentes.</li>
+                    <li>Elemento temporário que armazena dados e instruções durante o processamento.</li>
+                    <li>Diferente do modelo de Von Neumann, o Harvard Mark I possui uma memória que processa os dados e instruções de forma.</li>
+                    <li>O ENIAC foi desenvolvido em plena Segunda Guerra Mundial a pedido do exército dos EUA, seu objetivo era realizar cálculos.</li>
+                    <li>Em 1945, Von Neumann escreveu o rascunho de um relatório sobre o projeto ____________, nele continha a base do seu modelo de arquitetura.</li>
+                </ol>
+            </div>
         </div>
 
         <div class="qr-section">
             <h2>Acesse pelo Celular</h2>
-            <div class="qr-code" id="qrCode"></div>
-            <p>Escaneie o QR code para acessar o caça-palavras no seu celular</p>
+            <div id="qrCode" class="qr-code"></div>
+            <p>Escaneie o QR Code para acessar o caça-palavras no seu celular!</p>
         </div>
 
         <div class="ranking">
             <h2>Ranking dos Mais Rápidos</h2>
-            <ul class="ranking-list" id="rankingList"></ul>
+            <ul id="rankingList" class="ranking-list"></ul>
         </div>
-    </div>
+    </main>
 
-    <div class="overlay" id="overlay" style="display: none;"></div>
-    <div class="completion-message" id="completionMessage" style="display: none;">
+    <div id="overlay" class="overlay"></div>
+    <div id="completionMessage" class="completion-message">
         <h2>Parabéns!</h2>
-        <p>Você completou o caça-palavras em <span id="completionTime"></span>!</p>
-        <button onclick="closeCompletionMessage()">Fechar</button>
+        <p>Você completou o caça-palavras em <span id="completionTime"></span></p>
+        <button onclick="closeCompletionMessage()" class="kahoot-button">Fechar</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>

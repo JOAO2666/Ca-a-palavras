@@ -22,16 +22,27 @@ let foundWords = new Set();
 
 // Palavras e suas posições
 const words = {
-    "MEMORIA": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
-    "RAM": [[1, 0], [1, 1], [1, 2]],
-    "ROM": [[2, 0], [2, 1], [2, 2]],
-    "SSD": [[3, 0], [3, 1], [3, 2]],
-    "HD": [[4, 0], [4, 1]],
-    "PENDRIVE": [[5, 0], [5, 1], [5, 2], [5, 3], [5, 4], [5, 5], [5, 6], [5, 7]],
-    "CD": [[6, 0], [6, 1]],
-    "DVD": [[7, 0], [7, 1], [7, 2]],
-    "BLURAY": [[8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5]],
-    "FLOPPY": [[9, 0], [9, 1], [9, 2], [9, 3], [9, 4], [9, 5]]
+    "VOLATIL": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
+    "PRIMARIAS": [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8]],
+    "SECUNDARIAS": [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [2, 8], [2, 9], [2, 10]],
+    "SCANNER": [[3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5], [3, 6]],
+    "TECLADO": [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [4, 5], [4, 6]],
+    "WIRELESS": [[5, 0], [5, 1], [5, 2], [5, 3], [5, 4], [5, 5], [5, 6], [5, 7]],
+    "OCULOS": [[6, 0], [6, 1], [6, 2], [6, 3], [6, 4], [6, 5]],
+    "CPU": [[7, 0], [7, 1], [7, 2]],
+    "ULA": [[8, 0], [8, 1], [8, 2]],
+    "UNIDADEDECONTROLE": [[17, 0], [17, 1], [17, 2], [17, 3], [17, 4], [17, 5], [17, 6], [17, 7], [17, 8], [17, 9], [17, 10], [17, 11], [17, 12], [17, 13], [17, 14], [17, 15]],
+    "REGISTRADORES": [[19, 0], [19, 1], [19, 2], [19, 3], [19, 4], [19, 5], [19, 6], [19, 7], [19, 8], [19, 9], [19, 10], [19, 11]],
+    "PARALELA": [[17, 0], [17, 1], [17, 2], [17, 3], [17, 4], [17, 5], [17, 6], [17, 7]],
+    "BALISTICOS": [[13, 0], [13, 1], [13, 2], [13, 3], [13, 4], [13, 5], [13, 6], [13, 7], [13, 8], [13, 9]],
+    "EDVAC": [[13, 0], [13, 1], [13, 2], [13, 3], [13, 4]]
+};
+
+// Efeitos sonoros do Kahoot
+const sounds = {
+    correct: new Audio('https://cdn.kahoot.it/build/assets/sounds/correct.mp3'),
+    wrong: new Audio('https://cdn.kahoot.it/build/assets/sounds/wrong.mp3'),
+    complete: new Audio('https://cdn.kahoot.it/build/assets/sounds/complete.mp3')
 };
 
 // Inicialização do grid
@@ -42,25 +53,41 @@ function initializeGrid() {
     selectedCells = [];
     foundWords.clear();
 
-    // Criar grid 15x15
-    for (let i = 0; i < 15; i++) {
+    const gridLetters = [
+        "MBXGGJWTKPXYXWDPXYQG",
+        "OHSFIRNZNJIFTSFSOPIV",
+        "UCMCPUBDBUDGWOBEWNBS",
+        "EPUCVKVDFONBGNKCFJOS",
+        "BKOLGYCELNUKYBSVUZID",
+        "FANHOWETHLKIPYANSJUR",
+        "ECLUASJTRYVACDADDJHZ",
+        "WXCIKZBZNEPUUVMASLWS",
+        "MIVMSTXLUXDANOGREWSC",
+        "JMQSBTWOSOHMVLLIYGOA",
+        "XRKAAWITHUYYVAAUECAN",
+        "UPZGWECTCPVXHQCPSZXT",
+        "XQDELUDAOXEVTIBEYXSB",
+        "HZYELDURCSTMELWRHDXR",
+        "YRRFFPKHDUITYCDHNTRO",
+        "RIRHFHUCRBGALKDWVYQP",
+        "WIFDQTDACPCMAALVTYVP",
+        "CUNIDADEDECOPARALELA",
+        "HSMJKRYREGISTRADORES",
+        "WDSVQDXJXPFBESFYCIAV"
+    ];
+
+    // Criar grid 20x20
+    for (let i = 0; i < 20; i++) {
         grid[i] = [];
-        for (let j = 0; j < 15; j++) {
+        for (let j = 0; j < 20; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.dataset.row = i;
             cell.dataset.col = j;
-            cell.textContent = getRandomLetter();
+            cell.textContent = gridLetters[i][j];
             grid[i][j] = cell;
             gridElement.appendChild(cell);
         }
-    }
-
-    // Colocar palavras no grid
-    for (const [word, positions] of Object.entries(words)) {
-        positions.forEach(([row, col]) => {
-            grid[row][col].textContent = word[col];
-        });
     }
 
     // Adicionar eventos
@@ -117,10 +144,18 @@ function checkWord(word) {
         foundWords.add(word);
         wordElement.classList.add('found');
         selectedCells.forEach(cell => cell.classList.add('found'));
+        sounds.correct.play();
 
         if (foundWords.size === Object.keys(words).length) {
+            sounds.complete.play();
             endGame();
         }
+    } else {
+        sounds.wrong.play();
+        selectedCells.forEach(cell => {
+            cell.classList.add('wrong');
+            setTimeout(() => cell.classList.remove('wrong'), 500);
+        });
     }
 }
 
@@ -147,7 +182,7 @@ function startGame() {
 function resetGame() {
     isGameStarted = false;
     clearInterval(timerInterval);
-    document.getElementById('timer').textContent = 'Tempo: 00:00';
+    document.querySelector('.kahoot-timer').textContent = 'Tempo: 00:00';
 
     document.getElementById('startButton').disabled = false;
     document.getElementById('resetButton').disabled = true;
@@ -160,7 +195,7 @@ function resetGame() {
 function endGame() {
     isGameStarted = false;
     clearInterval(timerInterval);
-    const completionTime = document.getElementById('timer').textContent;
+    const completionTime = document.querySelector('.kahoot-timer').textContent;
 
     const studentName = document.getElementById('studentName').value.trim();
     saveScore(studentName, completionTime);
@@ -175,8 +210,14 @@ function updateTimer() {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const minutes = Math.floor(elapsed / 60);
     const seconds = elapsed % 60;
-    document.getElementById('timer').textContent =
-        `Tempo: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const timerElement = document.querySelector('.kahoot-timer');
+    timerElement.textContent = `Tempo: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    // Efeito de pulso no timer
+    if (seconds % 2 === 0) {
+        timerElement.style.transform = 'scale(1.1)';
+        setTimeout(() => timerElement.style.transform = 'scale(1)', 200);
+    }
 }
 
 // QR Code
@@ -234,15 +275,40 @@ function closeCompletionMessage() {
     document.getElementById('overlay').style.display = 'none';
 }
 
+// Efeito de destaque nas palavras encontradas
+function highlightFoundWord(word) {
+    const wordElement = document.querySelector(`.word-item[data-word="${word}"]`);
+    if (wordElement) {
+        wordElement.style.transform = 'scale(1.1)';
+        wordElement.style.backgroundColor = '#ffd700';
+        setTimeout(() => {
+            wordElement.style.transform = 'scale(1)';
+            wordElement.style.backgroundColor = '';
+        }, 500);
+    }
+}
+
+// Animação de entrada
+function animateEntry() {
+    const elements = document.querySelectorAll('.word-item, .cell, .kahoot-button');
+    elements.forEach((element, index) => {
+        setTimeout(() => {
+            element.style.opacity = '1';
+            element.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+}
+
 // Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    initializeGrid();
+    generateQRCode();
+    updateRanking();
+});
+
 document.getElementById('startButton').addEventListener('click', startGame);
 document.getElementById('resetButton').addEventListener('click', resetGame);
 document.getElementById('checkButton').addEventListener('click', () => {
     const selectedWord = selectedCells.map(cell => cell.textContent).join('');
     checkWord(selectedWord);
-});
-
-// Inicialização
-updateRanking();
-initializeGrid();
-generateQRCode(); 
+}); 
